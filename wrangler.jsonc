@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "arask",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // La app (React) se sirve como archivos estáticos; /api/* lo atiende el Worker.
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "arask-db",
+      "database_id": "168f8a7e-dca0-4235-ada5-521bc3d419d6",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "PHOTOS",
+      "bucket_name": "arask-photos"
+    }
+  ],
+  "vars": {
+    // Correos que reciben el rol de administrador al registrarse (separados por coma).
+    "ADMIN_EMAILS": "josedanielmd2021@gmail.com",
+    // Orígenes permitidos además del propio dominio (la app Android usa https://localhost).
+    "ALLOWED_ORIGINS": "https://localhost,capacitor://localhost,http://localhost:5173"
+  },
+  "observability": { "enabled": true }
+}

@@ -1,0 +1,174 @@
+@startuml ARASK_BaseDeDatos
+title ARASK — Modelo de datos (Cloudflare D1 / SQLite)
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 8
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #0E4F5C
+  HeaderBackgroundColor #B3EBFB
+}
+
+entity "users" as users {
+  * id : TEXT <<PK>>
+  --
+  * email : TEXT <<UNIQUE>>
+  * name : TEXT
+  * password_hash : TEXT
+  * password_salt : TEXT
+  * role : TEXT  ('user' | 'admin')
+  avatar_key : TEXT
+  * verified : INTEGER (0/1)
+  * disabled : INTEGER (0/1)
+  * created_at : TEXT
+}
+
+entity "sessions" as sessions {
+  * token_hash : TEXT <<PK>>
+  --
+  * user_id : TEXT <<FK>>
+  * created_at : TEXT
+  * expires_at : TEXT
+}
+
+entity "cases" as cases {
+  * id : INTEGER <<PK, AUTOINCREMENT>>
+  --
+  * name : TEXT
+  * species : TEXT  ('perro' | 'gato' | 'otro')
+  sex : TEXT  ('Hembra' | 'Macho')
+  profile : TEXT
+  * condition : TEXT  ('saludable' | 'herido' | 'desnutrido' | 'urgente')
+  * status : TEXT  ('reportado' | 'en_atencion' | 'rescatado' | 'adopcion' | 'cerrado')
+  * description : TEXT
+  medical_note : TEXT
+  * lat : REAL
+  * lng : REAL
+  * address : TEXT
+  * zone : TEXT
+  * reporter_id : TEXT <<FK>>
+  * anonymous : INTEGER (0/1)
+  * verified : INTEGER (0/1)
+  * hidden : INTEGER (0/1)
+  hidden_reason : TEXT
+  * donation_goal : INTEGER
+  * created_at : TEXT
+  * updated_at : TEXT
+}
+
+entity "case_photos" as case_photos {
+  * id : INTEGER <<PK>>
+  --
+  * case_id : INTEGER <<FK>>
+  * key : TEXT  (clave en R2)
+  * position : INTEGER
+}
+
+entity "case_needs" as case_needs {
+  * case_id : INTEGER <<PK, FK>>
+  * need : TEXT <<PK>>  ('alimento' | 'veterinario' | 'traslado' | 'hogar' | 'medicamentos' | 'donacion')
+  --
+  detail : TEXT
+  * state : TEXT  ('pendiente' | 'en_camino' | 'cubierto')
+}
+
+entity "case_events" as case_events {
+  * id : INTEGER <<PK>>
+  --
+  * case_id : INTEGER <<FK>>
+  * status : TEXT
+  * detail : TEXT
+  user_id : TEXT <<FK>>
+  * at : TEXT
+}
+
+entity "case_helpers" as case_helpers {
+  * case_id : INTEGER <<PK, FK>>
+  * user_id : TEXT <<PK, FK>>
+  --
+  * help_type : TEXT
+  * joined_at : TEXT
+}
+
+entity "case_comments" as case_comments {
+  * id : INTEGER <<PK>>
+  --
+  * case_id : INTEGER <<FK>>
+  * user_id : TEXT <<FK>>
+  * body : TEXT
+  * created_at : TEXT
+}
+
+entity "case_flags" as case_flags {
+  * case_id : INTEGER <<PK, FK>>
+  * user_id : TEXT <<PK, FK>>
+  --
+  * reason : TEXT  ('falso' | 'duplicado' | 'inapropiado' | 'resuelto')
+  * created_at : TEXT
+}
+
+entity "saved_cases" as saved_cases {
+  * user_id : TEXT <<PK, FK>>
+  * case_id : INTEGER <<PK, FK>>
+  --
+  * saved_at : TEXT
+}
+
+entity "campaigns" as campaigns {
+  * id : INTEGER <<PK>>
+  --
+  * title : TEXT
+  * goal : INTEGER
+  * starts_at : TEXT
+  * ends_at : TEXT
+  * active : INTEGER (0/1)
+}
+
+entity "donations" as donations {
+  * id : INTEGER <<PK>>
+  --
+  * user_id : TEXT <<FK>>
+  case_id : INTEGER <<FK>>
+  campaign_id : INTEGER <<FK>>
+  * amount : INTEGER
+  * frequency : TEXT  ('unica' | 'mensual')
+  * destination : TEXT
+  * method : TEXT
+  * status : TEXT  ('simulada')
+  * created_at : TEXT
+}
+
+entity "notifications" as notifications {
+  * id : INTEGER <<PK>>
+  --
+  * user_id : TEXT <<FK>>
+  * type : TEXT
+  * title : TEXT
+  * body : TEXT
+  case_id : INTEGER <<FK>>
+  * read : INTEGER (0/1)
+  * created_at : TEXT
+}
+
+users ||--o{ sessions : "inicia"
+users ||--o{ cases : "reporta"
+users ||--o{ case_helpers : "ayuda en"
+users ||--o{ case_comments : "escribe"
+users ||--o{ case_flags : "marca"
+users ||--o{ saved_cases : "guarda"
+users ||--o{ donations : "dona"
+users ||--o{ notifications : "recibe"
+users |o--o{ case_events : "registra"
+
+cases ||--o{ case_photos : "tiene"
+cases ||--o{ case_needs : "necesita"
+cases ||--o{ case_events : "historial"
+cases ||--o{ case_helpers : "rescatistas"
+cases ||--o{ case_comments : "coordinación"
+cases ||--o{ case_flags : "alertas"
+cases ||--o{ saved_cases : "seguido por"
+cases |o--o{ donations : "recibe"
+cases |o--o{ notifications : "origina"
+
+campaigns |o--o{ donations : "acumula"
+@enduml
